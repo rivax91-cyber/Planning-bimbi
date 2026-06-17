@@ -278,13 +278,27 @@ export default function App() {
                   </div>
                   
                   {/* Griglia icone adattiva */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '6px' }}>
                     {EMOJI_LIST.map(item => (
                       <button key={item.emoji} onClick={() => setSelectedEmoji(item.emoji)} title={item.label}
                         style={{ fontSize: '1.5rem', padding: '6px', background: selectedEmoji === item.emoji ? '#fae69e' : 'transparent', border: 'none', borderRadius: '10px', cursor: 'pointer', textAlign: 'center' }}>
                         {item.emoji}
                       </button>
                     ))}
+                  </div>
+
+                  {/* DESCRIZIONE EMOJI DINAMICA (Perfetta per Smartphone e Tablet) */}
+                  <div style={{ 
+                    textAlign: 'center', 
+                    fontSize: '0.9rem', 
+                    color: '#666', 
+                    background: '#f5f5f5', 
+                    padding: '6px', 
+                    borderRadius: '10px', 
+                    marginBottom: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    Categoria: {EMOJI_LIST.find(e => e.emoji === selectedEmoji)?.label || ''}
                   </div>
                   
                   <button onClick={addTask} style={{ width: '100%', padding: '12px', background: '#73d216', color: 'white', border: 'none', borderRadius: '15px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}>Aggiungi all'Agenda</button>
