@@ -64,6 +64,8 @@ export default function App() {
   const [taskTime, setTaskTime] = useState('08:00');
   const [selectedEmoji, setSelectedEmoji] = useState('‼️');
   const [todoText, setTodoText] = useState('');
+  
+  const [notificationStatus, setNotificationStatus] = useState('default');
 
   // Rileva se lo schermo è piccolo (Mobile)
   useEffect(() => {
@@ -74,6 +76,57 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Controlla lo stato dei permessi delle notifiche all'avvio
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationStatus(Notification.permission);
+    }
+  }, []);
+
+  // Funzione per richiedere il permesso delle notifiche
+  const requestNotificationPermission = () => {
+    if (!('Notification' in window)) {
+      alert("Questo browser non supporta le notifiche.");
+      return;
+    }
+    Notification.requestPermission().then(permission => {
+      setNotificationStatus(permission);
+    });
+  };
+
+  // TIMER DI CONTROLLO: Verifica ogni minuto se c'è un'attività da notificare
+  useEffect(() => {
+    const checkSchedule = () => {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+      const oraAttuale = new Date();
+      // Trasforma le ore/minuti correnti nel formato "HH:MM" (es: "16:00")
+      const stringaOra = oraAttuale.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      const chiaveGiorno = oraAttuale.toDateString();
+
+      // Cerca se oggi ci sono compiti a quest'ora precisa
+      const compitiDiOggi = tasks[chiaveGiorno] || [];
+      const compitoAttuale = compitiDiOggi.find(t => t.time === stringaOra);
+
+      if (compitoAttuale) {
+        // Evitiamo doppie notifiche nello stesso minuto salvando l'ID dell'ultima inviata
+        const lastSentId = localStorage.getItem('last-notified-task-id');
+        if (lastSentId !== String(compitoAttuale.id)) {
+          new Notification(`Spazio Bimbi - Ciao ${childName}! 👋`, {
+            body: `⏰ Sono le ${compitoAttuale.time}: è ora di fare "${compitoAttuale.emoji} ${compitoAttuale.text}"!`,
+            icon: '/favicon.svg'
+          });
+          localStorage.setItem('last-notified-task-id', compitoAttuale.id);
+        }
+      }
+    };
+
+    // Esegui il controllo subito e poi ogni 30 secondi
+    checkSchedule();
+    const intervallo = setInterval(checkSchedule, 30000);
+    return () => clearInterval(intervallo);
+  }, [tasks, childName]);
 
   useEffect(() => {
     const activeTheme = THEMES.find(t => t.id === theme) || THEMES[0];
@@ -208,6 +261,27 @@ export default function App() {
       {/* CONTENITORE PRINCIPALE */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
+        {/* AVVISO PER ATTIVARE LE NOTIFICHE (Compare solo se non sono già attive) */}
+        {notificationStatus !== 'granted' && (
+          <div style={{
+            background: '#fffae6', border: '2px dashed #ffa000', padding: '12px 20px', 
+            borderRadius: '20px', display: 'flex', justifyContent: 'space-between', 
+            alignItems: 'center', gap: '15px', flexDirection: isMobile ? 'column' : 'row',
+            textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+          }}>
+            <span style={{ fontSize: '0.95rem', color: '#666', fontWeight: 'bold' }}>
+              🔔 Vuoi che l'agenda ti avvisi quando è ora di fare i compiti o merenda?
+            </span>
+            <button onClick={requestNotificationPermission} style={{
+              background: '#ffa000', color: 'white', border: 'none', padding: '8px 16px',
+              borderRadius: '12px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}>
+              Attiva Avvisi 🔔
+            </button>
+          </div>
+        )}
+
         {/* INTESTAZIONE E SALUTO */}
         <div style={{ padding: '0 5px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: '15px', justifyContent: 'space-between', textAlign: 'center', marginTop: isMobile ? '10px' : '0' }}>
           {isEditingName ? (
@@ -287,7 +361,7 @@ export default function App() {
                     ))}
                   </div>
 
-                  {/* DESCRIZIONE EMOJI DINAMICA (Perfetta per Smartphone e Tablet) */}
+                  {/* Descrizione dinamica per Mobile */}
                   <div style={{ 
                     textAlign: 'center', 
                     fontSize: '0.9rem', 
@@ -375,7 +449,6 @@ export default function App() {
               <button onClick={() => changeWeek(1)} style={{ padding: '8px 12px', borderRadius: '10px', border: 'none', background: '#f0f0f0', cursor: 'pointer' }}>▶</button>
             </div>
 
-            {/* Su mobile mette i giorni in colonna verticale singola */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(7, 1fr)', gap: '10px' }}>
               {weekDays.map(day => {
                 const dKey = day.toDateString();
