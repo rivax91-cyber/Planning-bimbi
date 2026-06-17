@@ -1,8 +1,28 @@
-/* Reset totale delle impostazioni bloccanti di Vite */
-html, body, #root {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  min-height: 100vh !important;
-  display: block !important;
+/* Quando lo schermo è più piccolo di 768 pixel (smartphone e piccoli tablet) */
+@media (max-width: 768px) {
+  /* Forza il layout a disporsi in verticale anziché in orizzontale */
+  .app-layout, .container, .main-content { 
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 10px !important;
+    gap: 15px !important;
+  }
+
+  /* Fai in modo che il calendario e le schede prendano tutta la larghezza del telefono */
+  .calendar-section, .agenda-section, .sidebar, .card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Rimpicciolisci leggermente i testi e i titoli per non farli andare a capo male */
+  h1 {
+    font-size: 1.8rem !important;
+    text-align: center;
+  }
+
+  /* Ottimizza la griglia delle icone/emojii sui telefoni */
+  .emotion-grid, .icon-selector {
+    grid-template-columns: repeat(5, 1fr) !important; /* mette 5 icone per riga */
+    gap: 8px !important;
+  }
 }
